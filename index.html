@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claim DIRA Tokens</title>
+  <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js"></script>
+</head>
+<body style="background-color: darkgreen; color: gold; text-align: center; padding: 20px;">
+
+  <h1>Claim Your DIRA Tokens</h1>
+  <p>Connect your wallet to claim your airdrop!</p>
+
+  <button id="connectWalletBtn" style="padding: 10px 20px; background: gold; color: darkgreen; font-size: 18px; cursor: pointer;">
+    Connect Wallet
+  </button>
+  <br><br>
+  <button id="claimBtn" style="padding: 10px 20px; background: gold; color: darkgreen; font-size: 18px; cursor: pointer; display: none;">
+    Claim 1000 DIRA
+  </button>
+
+  <p id="status"></p>
+
+  <script>
+    const treasuryWallet = "53hZ5wdfphd8wUoh6rqrv5STvB58yBRaXuZFAWwitKm8"; // Replace with your treasury wallet address
+    const tokenMintAddress = "DPeLhcqUgBeTZQyXA6mYyxVhLvTptLHc5JvTCpvgGqhR"; // Replace with your token mint address
+    let userWallet = null;
+
+    async function connectWallet() {
+      if (!window.solana) {
+        alert("Phantom Wallet is required to connect!");
+        return;
+      }
+
+      try {
+        const response = await window.solana.connect();
+        userWallet = response.publicKey.toString();
+        document.getElementById("status").innerText = `Connected: ${userWallet}`;
+        document.getElementById("claimBtn").style.display = "inline-block";
+      } catch (err) {
+        console.error(err);
+        alert("Wallet connection failed.");
+      }
+    }
+
+    async function claimTokens() {
+      if (!userWallet) {
+        alert("Please connect your wallet first!");
+        return;
+      }
+
+      try {
+        const connection = new solanaWeb3.Connection(solanaWeb3.clusterApiUrl("devnet"), "confirmed");
+        const fromWallet = solanaWeb3.Keypair.fromSecretKey(Uint8Array.from([])); // Replace with treasury wallet private key (secure storage needed!)
+        const toWallet = new solanaWeb3.PublicKey(userWallet);
+
+        // Create the transaction
+        const transaction = new solanaWeb3.Transaction().add(
+          solanaWeb3.SystemProgram.transfer({
+            fromPubkey: fromWallet.publicKey,
+            toPubkey: toWallet,
+            lamports: 1000000000, // Amount to transfer (in lamports for SOL or equivalent token units)
+          })
+        );
+
+        // Sign and send
+        const signature = await solanaWeb3.sendAndConfirmTransaction(connection, transaction, [fromWallet]);
+        console.log("Transaction signature", signature);
+        document.getElementById("status").innerText = "Claim successful! Transaction: " + signature;
+      } catch (err) {
+        console.error(err);
+        alert("Claim failed. Please try again.");
+      }
+    }
+
+    // Attach event listeners
+    document.getElementById("connectWalletBtn").addEventListener("click", connectWallet);
+    document.getElementById("claimBtn").addEventListener("click", claimTokens);
+  </script>
+
+</body>
+</html>
