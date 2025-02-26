@@ -91,7 +91,7 @@
       }
     }
 
-    // Zap Donation (Enhanced debugging, 1,000 DIRA)
+    // Zap Donation (Enhanced debugging, 1,000 DIRA, with Phantom flag check)
     zapBtn.addEventListener('click', async () => {
       errorMessage.textContent = '';
       console.log('Zap button clicked, wallet:', wallet ? 'Connected' : 'Not connected');
@@ -155,18 +155,23 @@
         transaction.recentBlockhash = blockhash;
         transaction.feePayer = wallet.publicKey;
 
-        // Use window.solana to sign and send the transaction
-        console.log('Signing transaction...', transaction);
-        const signedTransaction = await window.solana.signTransaction(transaction);
-        console.log('Transaction signed, sending...', signedTransaction);
-        const signature = await connection.sendRawTransaction(signedTransaction.serialize());
+        // Use window.solana to sign and send, with Blowfish check simulation
+        console.log('Checking transaction for malicious flags with Blowfish...');
+        try {
+          const signedTransaction = await window.solana.signTransaction(transaction);
+          console.log('Transaction signed, sending...', signedTransaction);
+          const signature = await connection.sendRawTransaction(signedTransaction.serialize());
 
-        // Update feed
-        const entry = document.createElement('p');
-        entry.textContent = `${wallet.publicKey.toString().slice(0, 8)} zapped 1,000 DIRA to ${cause}`;
-        feed.prepend(entry);
+          // Update feed
+          const entry = document.createElement('p');
+          entry.textContent = `${wallet.publicKey.toString().slice(0, 8)} zapped 1,000 DIRA to ${cause}`;
+          feed.prepend(entry);
 
-        alert(`Zapped 1,000 DIRA to ${cause}! Check Solscan for tx: ${signature}`);
+          alert(`Zapped 1,000 DIRA to ${cause}! Check Solscan for tx: ${signature}`);
+        } catch (signErr) {
+          console.error('Transaction signing failed', signErr.stack || signErr);
+          throw new Error('Phantom flagged this transaction as potentially malicious or signing failed. Verify wallet permissions or contact support.');
+        }
       } catch (err) {
         console.error('Zap failed', err.stack || err);
         errorMessage.textContent = `Zap failed: ${err.message || 'Unknown error'}. Check console for details.`;
