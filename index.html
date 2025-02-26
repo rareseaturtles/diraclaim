@@ -43,7 +43,7 @@
 <body>
   <div class="container">
     <h1>CharityZap with Cryptodira (DIRA)</h1>
-    <button class="btn btn-primary" onclick="connectWallet()">Sign Pledge</button> <!-- Changed to match your pattern -->
+    <button class="btn btn-primary" onclick="connectWallet()">Sign Pledge</button>
     <p id="wallet-status">Wallet: Not Connected</p>
     <p id="error-message" class="error"></p>
     
@@ -60,8 +60,8 @@
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
   <script src="https://unpkg.com/@solana/spl-token@latest/lib/index.iife.min.js"></script>
   <script>
-    const { Connection, PublicKey, Transaction } = solanaWeb3;
-    const { Token, TOKEN_PROGRAM_ID, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } = splToken;
+    // Initialize DOM elements at the top to avoid initialization errors
+    const connectBtn = document.querySelector('.btn-primary'); // Matches the "Sign Pledge" button
     const walletStatus = document.getElementById('wallet-status');
     const zapBtn = document.getElementById('zap-btn');
     const causeSelect = document.getElementById('cause-select');
@@ -73,7 +73,7 @@
     const charityWallet = new PublicKey('2QJ9Bwy8NhVG6C62pQ8qVFuCr94oR17CBk4nk18Gkavp');
     const tokenMint = new PublicKey('53hZ5wdfphd8wUoh6rqrv5STvB58yBRaXuZFAWwitKm8');
 
-    // Connect Wallet (Exactly like your "Sign Pledge" function)
+    // Connect Wallet (Exactly like your "Sign Pledge" pattern)
     async function connectWallet() {
       errorMessage.textContent = '';
       try {
