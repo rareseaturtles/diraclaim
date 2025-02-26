@@ -16,6 +16,10 @@
       padding: 1rem;
       margin-top: 1rem;
     }
+    .error {
+      color: red;
+      margin-top: 1rem;
+    }
   </style>
 </head>
 <body>
@@ -23,6 +27,7 @@
     <h1>CharityZap with Cryptodira (DIRA)</h1>
     <button id="connect-wallet" class="btn btn-primary">Connect Wallet</button>
     <p id="wallet-status">Wallet: Not Connected</p>
+    <p id="error-message" class="error"></p>
     
     <select id="cause-select" class="form-select mt-3">
       <option value="">Pick a Cause</option>
@@ -44,38 +49,34 @@
     const walletStatus = document.getElementById('wallet-status');
     const causeSelect = document.getElementById('cause-select');
     const feed = document.getElementById('feed');
+    const errorMessage = document.getElementById('error-message');
 
-    let wallet;
+    let wallet = null;
     const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
     const charityWallet = new PublicKey('2QJ9Bwy8NhVG6C62pQ8qVFuCr94oR17CBk4nk18Gkavp');
     const tokenMint = new PublicKey('53hZ5wdfphd8wUoh6rqrv5STvB58yBRaXuZFAWwitKm8');
 
-    // Check if Phantom is available
-    if (!window.solana || !window.solana.isPhantom) {
-      walletStatus.textContent = 'Please install Phantom Wallet!';
-      connectBtn.disabled = true;
-    }
-
-    // Connect Wallet
+    // Connect Wallet (Simplified to match your working code)
     connectBtn.addEventListener('click', async () => {
+      errorMessage.textContent = '';
       try {
-        if (!window.solana || !window.solana.isPhantom) {
+        if (!window.solana) {
           throw new Error('Phantom Wallet not detected');
         }
-        
         wallet = await window.solana.connect();
         walletStatus.textContent = `Wallet: ${wallet.publicKey.toString().slice(0, 8)}...`;
         zapBtn.disabled = false;
-        
-        // Listen for disconnect
+
+        // Listen for disconnect (optional but helpful)
         window.solana.on('disconnect', () => {
           wallet = null;
           walletStatus.textContent = 'Wallet: Not Connected';
           zapBtn.disabled = true;
+          errorMessage.textContent = 'Wallet disconnected. Reconnect to continue.';
         });
       } catch (err) {
         console.error('Wallet connection failed', err);
-        alert(`Connection failed: ${err.message}. Ensure Phantom is installed, unlocked, and allowed.`);
+        errorMessage.textContent = `Connection failed: ${err.message}. Ensure Phantom is installed, unlocked, and allowed.`;
       }
     });
 
@@ -85,12 +86,25 @@
       const cause = causeSelect.value;
       if (!cause) return alert('Pick a cause!');
 
+      errorMessage.textContent = '';
       try {
+        // Verify wallet has DIRA and SOL (simplified check)
+        const balance = await connection.getBalance(wallet.publicKey);
+        if (balance < 0.005 * 1e9) { // 0.005 SOL minimum for fees
+          throw new Error('Insufficient SOL for fees. Add at least 0.01 SOL.');
+        }
+
         // Get user's token account for DIRA
         const userTokenAccount = await getAssociatedTokenAddress(
           tokenMint,
           wallet.publicKey
         );
+
+        // Check if user has DIRA
+        const userTokenBalance = await getTokenBalance(userTokenAccount);
+        if (userTokenBalance < 1000) { // 0.1 DIRA in smallest units
+          throw new Error('Insufficient DIRA. Add DIRA to your wallet.');
+        }
 
         // Get or create charity's token account
         const charityTokenAccount = await getOrCreateAssociatedTokenAccount(
@@ -127,7 +141,7 @@
         alert(`Zapped 0.1 DIRA to ${cause}! Check Solscan for tx: ${signature}`);
       } catch (err) {
         console.error('Zap failed', err);
-        alert('Zap failed—check console, balance, or ensure you have DIRA and SOL.');
+        errorMessage.textContent = `Zap failed: ${err.message}. Check console for details.`;
       }
     });
 
@@ -161,11 +175,16 @@
       }
     }
 
-    // Fetch live feed (WIP - Solscan API later, placeholder for now)
-    function updateFeed() {
-      feed.innerHTML = '<p>Live feed loading soon—check back after some zaps!</p>';
+    // Helper: Get token balance
+    async function getTokenBalance(tokenAccount) {
+      try {
+        const accountInfo = await connection.getTokenAccountBalance(tokenAccount);
+        return accountInfo.value.uiAmount * 1e4; // Convert to smallest units (decimals = 4)
+      } catch (err) {
+        console.error('Failed to get token balance', err);
+        return 0;
+      }
     }
-    updateFeed();
   </script>
 </body>
 </html>
