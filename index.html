@@ -1,197 +1,210 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CharityZap - Cryptodira (DIRA)</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body {
-      background-color: #f8f9fa;
-      font-size: 16px; /* Base font size for mobile readability */
-    }
-    .container {
-      padding: 1rem; /* Extra padding on mobile */
-    }
-    #feed {
-      max-height: 200px; /* Smaller for mobile */
-      overflow-y: auto;
-      background: #fff;
-      padding: 0.5rem;
-      margin-top: 1rem;
-      font-size: 14px; /* Smaller for feed entries */
-    }
-    .btn, .form-select {
-      font-size: 16px; /* Larger for touch */
-      margin-bottom: 0.5rem; /* Space between elements */
-    }
-    /* Active state for touch feedback */
-    .btn:active {
-      opacity: 0.7;
-    }
-    /* Adjust for very small screens */
-    @media (max-width: 576px) {
-      h1 {
-        font-size: 1.5rem; /* Smaller header on tiny screens */
-      }
-      .btn, .form-select {
-        width: 100%; /* Full width buttons on small screens */
-      }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cryptodira - Protecting Sea Turtles</title>
+    <!-- Load the @solana/web3.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/@solana/web3.js@1.57.0/dist/index.iife.min.js"></script>
+    <style>
+        /* Basic styles for the website */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f8ff;
+            color: #333;
+        }
+        header {
+            background-color: #005f73;
+            color: #ffffff;
+            padding: 10px 0;
+            text-align: center;
+        }
+        header h1 {
+            font-size: 48px;
+            margin: 0;
+            font-family: 'Trebuchet MS', sans-serif;
+        }
+        header p {
+            font-size: 18px;
+            margin: 10px 0 0 0;
+            color: #94d2bd;
+        }
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .logo {
+            width: 150px;
+            height: auto;
+            border-radius: 50%;
+            border: 3px solid #005f73;
+        }
+        .content-box, .tokenomics {
+            text-align: center;
+            background-color: #ffffff;
+            padding: 20px;
+            margin: 20px auto;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            max-width: 800px;
+            width: 80%;
+            border: 1px solid #94d2bd;
+        }
+        .content-box h2, .tokenomics h3 {
+            font-size: 28px;
+            margin-bottom: 15px;
+            color: #005f73;
+        }
+        .content-box p, .tokenomics p {
+            font-size: 14px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+            color: #555;
+        }
+        .buttons {
+            margin-top: 30px;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .button {
+            display: inline-block;
+            padding: 12px 24px;
+            margin: 10px;
+            font-size: 16px;
+            color: #ffffff;
+            background-color: #005f73;
+            border: none;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            cursor: pointer;
+            flex: 0 0 auto;
+        }
+        .button:hover {
+            background-color: #023e58;
+        }
+        footer {
+            background-color: #005f73;
+            color: #ffffff;
+            text-align: center;
+            padding: 10px 0;
+        }
+        footer p {
+            margin: 0;
+            font-size: 14px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>CharityZap with Cryptodira (DIRA)</h1>
-    <button id="pledge-btn" class="btn btn-primary">Pledge</button> <!-- Changed to "Pledge" -->
-    <p id="wallet-status">Wallet: Not Connected</p>
-    <p id="error-message" class="error"></p>
-    
-    <select id="cause-select" class="form-select mt-3">
-      <option value="">Pick a Cause</option>
-      <option value="Cleaning the Earth">Cleaning the Earth</option>
-    </select>
-    <button id="zap-btn" class="btn btn-success mt-3" disabled>Zap 0.1 DIRA</button>
-    
-    <h3 class="mt-4">Live Feed</h3>
-    <div id="feed" class="border p-3"></div>
-  </div>
+    <!-- Header Section -->
+    <header>
+        <div class="logo-container">
+            <img 
+                class="logo" 
+                src="https://www.arweave.net/0UBZmi9VNO_QN7lem_KJ_grHzSIMyWgHjYdK2oUds6k?ext=jpg" 
+                alt="Cryptodira Logo"
+            />
+        </div>
+        <h1>Cryptodira</h1>
+        <p>A Crypto Token for Protecting Sea Turtles</p>
+    </header>
 
-  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
-  <script src="https://unpkg.com/@solana/spl-token@latest/lib/index.iife.min.js"></script>
-  <script>
-    const { Connection, PublicKey, Transaction } = solanaWeb3;
-    const { Token, TOKEN_PROGRAM_ID, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } = splToken;
-    const pledgeBtn = document.getElementById('pledge-btn'); // Changed ID to match your working code
-    const zapBtn = document.getElementById('zap-btn');
-    const walletStatus = document.getElementById('wallet-status');
-    const causeSelect = document.getElementById('cause-select');
-    const feed = document.getElementById('feed');
-    const errorMessage = document.getElementById('error-message');
+    <!-- About Section -->
+    <div class="content-box">
+        <h2>About Cryptodira $Dira</h2>
+        <p>
+       CryptoDira is a Solana blockchain-based token built for a community passionate about turtles and marine conservation. Inspired by the scientific suborder of turtles, CryptoDira brings together enthusiasts, advocates, and investors who share an appreciation for these remarkable creatures. As a utility-driven digital asset, CryptoDira fosters engagement, collaboration, and innovation within a network of like-minded individuals, leveraging blockchain technology to create a thriving ecosystem for turtle lovers worldwide.
+        </p>
+    </div>
 
-    let wallet = null;
-    const connection = new Connection('https://api.mainnet-beta.solana.com', 'confirmed');
-    const charityWallet = new PublicKey('2QJ9Bwy8NhVG6C62pQ8qVFuCr94oR17CBk4nk18Gkavp');
-    const tokenMint = new PublicKey('53hZ5wdfphd8wUoh6rqrv5STvB58yBRaXuZFAWwitKm8');
+    <!-- Tokenomics Section -->
+    <div class="tokenomics">
+        <h3>Tokenomics</h3>
+        <p>
+           CryptoDira (DIRA) Tokenomics
+Key Metrics:  
+Total Supply: 4,894,683.13 DIRA  
+Market Cap: $808.48  
+Price: $0.0001652  
+Decimals: 4  
+Holders: 57  
+Transactions: 749 transfers to date
+Mission & Utility:
+CryptoDira (DIRA) is more than just a token—it’s a movement to protect sea turtles and their habitats. Built for decentralized finance (DeFi), DIRA powers a unique ecosystem where every transaction contributes to ocean conservation. Use DIRA to provide liquidity, stake for rewards, or participate in yield-generating opportunities—all while supporting initiatives that safeguard endangered sea turtles. Our goal? Seamless transfers, sustainable growth, and a cleaner planet for these ancient mariners.
 
-    // Connect Wallet (Exactly like your "Pledge" button)
-    pledgeBtn.addEventListener('click', async () => {
-      errorMessage.textContent = '';
-      try {
-        wallet = await window.solana.connect();
-        walletStatus.textContent = `Wallet: ${wallet.publicKey.toString().slice(0, 8)}...`;
-        zapBtn.disabled = false;
-      } catch (err) {
-        console.error('Wallet connection failed', err);
-        errorMessage.textContent = `Connection failed: ${err.message}. Ensure Phantom is installed, unlocked, and allowed.`;
-      }
-    });
+Recent Market Activity:
+A significant price surge followed by a sharp correction, indicating high volatility.
+Increased trading volume, suggesting growing interest and liquidity movement.
+Active transfers between vaults, signaling dynamic liquidity management.
+Transparency & Tracking:
+For the latest transactions, holder distribution, and contract details, visit Solscan for real-time updates on CryptoDira.
+        </p>
+    </div>
 
-    // Zap Donation
-    zapBtn.addEventListener('click', async () => {
-      if (!wallet) return;
-      const cause = causeSelect.value;
-      if (!cause) return alert('Pick a cause!');
+    <!-- Donation and Buttons Section -->
+    <div class="buttons">
+        <button class="button" onclick="connectAndSignMessage()">Sign Pledge</button>
+        <a 
+            href="https://app.meteora.ag/pools/9H67psNKre9dMAscpsYkEPGmYFw4MjeqV5Rmott2mDmd?internal=true" 
+            class="button" 
+            target="_blank">
+            Swap Here
+        </a>
+        <a 
+            href="https://birdeye.so/token/53hZ5wdfphd8wUoh6rqrv5STvB58yBRaXuZFAWwitKm8?chain=solana" 
+            class="button" 
+            target="_blank">
+            Birdeye Chart
+        </a>
+          <a 
+        href="https://stake.smithii.io/dirastake" 
+        class="button" 
+        target="_blank">
+        Stake Here
+    </a>
+    </div>
 
-      errorMessage.textContent = '';
-      try {
-        // Verify wallet has DIRA and SOL (simplified check)
-        const balance = await connection.getBalance(wallet.publicKey);
-        if (balance < 0.005 * 1e9) { // 0.005 SOL minimum for fees
-          throw new Error('Insufficient SOL for fees. Add at least 0.01 SOL.');
+    <!-- Footer Section -->
+    <footer>
+        <p>&copy; 2024 Cryptodira. Supporting Sea Turtle Conservation.</p>
+    </footer>
+
+    <!-- JavaScript -->
+    <script>
+        async function connectAndSignMessage() {
+            if (window.solana && window.solana.isPhantom) {
+                try {
+                    // Connect to Phantom wallet
+                    await window.solana.connect();
+                    const walletAddress = window.solana.publicKey.toString();
+                    console.log('Connected to Phantom Wallet:', walletAddress);
+
+                    // Message to sign
+                    const message = "Welcome to Cryptodira! I promise to be nice to turtles.";
+                    const encodedMessage = new TextEncoder().encode(message);
+
+                    // Request signing
+                    const signedMessage = await window.solana.signMessage(encodedMessage, 'utf8');
+                    console.log('Signed message:', signedMessage);
+
+                    alert('Thank you for signing the pledge! Together, we can protect sea turtles. Code: HucYP9g2DxWs');
+                } catch (error) {
+                    console.error('Error during wallet connection or signing:', error);
+                    if (error.message.includes("User rejected the request")) {
+                        alert('You declined to sign the pledge. Please try again.');
+                    } else {
+                        alert('An error occurred. Please try again.');
+                    }
+                }
+            } else {
+                alert('Phantom Wallet is not detected. Please install it and try again.');
+            }
         }
-
-        // Get user's token account for DIRA
-        const userTokenAccount = await getAssociatedTokenAddress(
-          tokenMint,
-          wallet.publicKey
-        );
-
-        // Check if user has DIRA
-        const userTokenBalance = await getTokenBalance(userTokenAccount);
-        if (userTokenBalance < 1000) { // 0.1 DIRA in smallest units
-          throw new Error('Insufficient DIRA. Add DIRA to your wallet.');
-        }
-
-        // Get or create charity's token account
-        const charityTokenAccount = await getOrCreateAssociatedTokenAccount(
-          connection,
-          wallet,
-          tokenMint,
-          charityWallet
-        );
-
-        // Send 0.1 DIRA (1,000 smallest units, since decimals = 4)
-        const transaction = new Transaction();
-        const transferInstruction = Token.createTransferInstruction(
-          TOKEN_PROGRAM_ID,
-          userTokenAccount,
-          charityTokenAccount.address,
-          wallet.publicKey,
-          [],
-          1000 // 0.1 DIRA
-        );
-        transaction.add(transferInstruction);
-
-        const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-        transaction.recentBlockhash = blockhash;
-        transaction.feePayer = wallet.publicKey;
-
-        const signature = await wallet.signTransaction(transaction);
-        await connection.sendRawTransaction(signature.serialize());
-
-        // Update feed
-        const entry = document.createElement('p');
-        entry.textContent = `${wallet.publicKey.toString().slice(0, 8)} zapped 0.1 DIRA to ${cause}`;
-        feed.prepend(entry);
-
-        alert(`Zapped 0.1 DIRA to ${cause}! Check Solscan for tx: ${signature}`);
-      } catch (err) {
-        console.error('Zap failed', err);
-        errorMessage.textContent = `Zap failed: ${err.message}. Check console for details.`;
-      }
-    });
-
-    // Helper: Get or create associated token account
-    async function getOrCreateAssociatedTokenAccount(connection, wallet, mint, owner) {
-      try {
-        const associatedAddress = await getAssociatedTokenAddress(mint, owner);
-        const accountInfo = await connection.getAccountInfo(associatedAddress);
-        if (!accountInfo) {
-          // Create associated token account if it doesn't exist
-          const transaction = new Transaction();
-          const createInstruction = createAssociatedTokenAccountInstruction(
-            wallet.publicKey,
-            associatedAddress,
-            owner,
-            mint
-          );
-          transaction.add(createInstruction);
-
-          const { blockhash, lastValidBlockHeight } = await connection.getLatestBlockhash();
-          transaction.recentBlockhash = blockhash;
-          transaction.feePayer = wallet.publicKey;
-
-          const signature = await wallet.signTransaction(transaction);
-          await connection.sendRawTransaction(signature.serialize());
-        }
-        return { address: associatedAddress };
-      } catch (err) {
-        console.error('Token account setup failed', err);
-        throw err;
-      }
-    }
-
-    // Helper: Get token balance
-    async function getTokenBalance(tokenAccount) {
-      try {
-        const accountInfo = await connection.getTokenAccountBalance(tokenAccount);
-        return accountInfo.value.uiAmount * 1e4; // Convert to smallest units (decimals = 4)
-      } catch (err) {
-        console.error('Failed to get token balance', err);
-        return 0;
-      }
-    }
-  </script>
+    </script>
 </body>
 </html>
