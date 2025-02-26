@@ -8,24 +8,42 @@
   <style>
     body {
       background-color: #f8f9fa;
+      font-size: 16px; /* Base font size for mobile readability */
+    }
+    .container {
+      padding: 1rem; /* Extra padding on mobile */
     }
     #feed {
-      max-height: 300px;
+      max-height: 200px; /* Smaller for mobile */
       overflow-y: auto;
       background: #fff;
-      padding: 1rem;
+      padding: 0.5rem;
       margin-top: 1rem;
+      font-size: 14px; /* Smaller for feed entries */
     }
-    .error {
-      color: red;
-      margin-top: 1rem;
+    .btn, .form-select {
+      font-size: 16px; /* Larger for touch */
+      margin-bottom: 0.5rem; /* Space between elements */
+    }
+    /* Active state for touch feedback */
+    .btn:active {
+      opacity: 0.7;
+    }
+    /* Adjust for very small screens */
+    @media (max-width: 576px) {
+      h1 {
+        font-size: 1.5rem; /* Smaller header on tiny screens */
+      }
+      .btn, .form-select {
+        width: 100%; /* Full width buttons on small screens */
+      }
     }
   </style>
 </head>
 <body>
-  <div class="container mt-5">
+  <div class="container">
     <h1>CharityZap with Cryptodira (DIRA)</h1>
-    <button id="connect-wallet" class="btn btn-primary">Connect Wallet</button>
+    <button id="pledge-btn" class="btn btn-primary">Pledge</button> <!-- Changed to "Pledge" -->
     <p id="wallet-status">Wallet: Not Connected</p>
     <p id="error-message" class="error"></p>
     
@@ -44,7 +62,7 @@
   <script>
     const { Connection, PublicKey, Transaction } = solanaWeb3;
     const { Token, TOKEN_PROGRAM_ID, getAssociatedTokenAddress, createAssociatedTokenAccountInstruction } = splToken;
-    const connectBtn = document.getElementById('connect-wallet');
+    const pledgeBtn = document.getElementById('pledge-btn'); // Changed ID to match your working code
     const zapBtn = document.getElementById('zap-btn');
     const walletStatus = document.getElementById('wallet-status');
     const causeSelect = document.getElementById('cause-select');
@@ -56,24 +74,13 @@
     const charityWallet = new PublicKey('2QJ9Bwy8NhVG6C62pQ8qVFuCr94oR17CBk4nk18Gkavp');
     const tokenMint = new PublicKey('53hZ5wdfphd8wUoh6rqrv5STvB58yBRaXuZFAWwitKm8');
 
-    // Connect Wallet (Simplified to match your working code)
-    connectBtn.addEventListener('click', async () => {
+    // Connect Wallet (Exactly like your "Pledge" button)
+    pledgeBtn.addEventListener('click', async () => {
       errorMessage.textContent = '';
       try {
-        if (!window.solana) {
-          throw new Error('Phantom Wallet not detected');
-        }
         wallet = await window.solana.connect();
         walletStatus.textContent = `Wallet: ${wallet.publicKey.toString().slice(0, 8)}...`;
         zapBtn.disabled = false;
-
-        // Listen for disconnect (optional but helpful)
-        window.solana.on('disconnect', () => {
-          wallet = null;
-          walletStatus.textContent = 'Wallet: Not Connected';
-          zapBtn.disabled = true;
-          errorMessage.textContent = 'Wallet disconnected. Reconnect to continue.';
-        });
       } catch (err) {
         console.error('Wallet connection failed', err);
         errorMessage.textContent = `Connection failed: ${err.message}. Ensure Phantom is installed, unlocked, and allowed.`;
