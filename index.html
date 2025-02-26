@@ -50,19 +50,32 @@
     const charityWallet = new PublicKey('2QJ9Bwy8NhVG6C62pQ8qVFuCr94oR17CBk4nk18Gkavp');
     const tokenMint = new PublicKey('53hZ5wdfphd8wUoh6rqrv5STvB58yBRaXuZFAWwitKm8');
 
+    // Check if Phantom is available
+    if (!window.solana || !window.solana.isPhantom) {
+      walletStatus.textContent = 'Please install Phantom Wallet!';
+      connectBtn.disabled = true;
+    }
+
     // Connect Wallet
     connectBtn.addEventListener('click', async () => {
-      if (window.solana && window.solana.isPhantom) {
-        try {
-          wallet = await window.solana.connect();
-          walletStatus.textContent = `Wallet: ${wallet.publicKey.toString().slice(0, 8)}...`;
-          zapBtn.disabled = false;
-        } catch (err) {
-          console.error('Wallet connection failed', err);
-          alert('Wallet connection failed—check console or install Phantom.');
+      try {
+        if (!window.solana || !window.solana.isPhantom) {
+          throw new Error('Phantom Wallet not detected');
         }
-      } else {
-        alert('Please install Phantom Wallet!');
+        
+        wallet = await window.solana.connect();
+        walletStatus.textContent = `Wallet: ${wallet.publicKey.toString().slice(0, 8)}...`;
+        zapBtn.disabled = false;
+        
+        // Listen for disconnect
+        window.solana.on('disconnect', () => {
+          wallet = null;
+          walletStatus.textContent = 'Wallet: Not Connected';
+          zapBtn.disabled = true;
+        });
+      } catch (err) {
+        console.error('Wallet connection failed', err);
+        alert(`Connection failed: ${err.message}. Ensure Phantom is installed, unlocked, and allowed.`);
       }
     });
 
@@ -114,7 +127,7 @@
         alert(`Zapped 0.1 DIRA to ${cause}! Check Solscan for tx: ${signature}`);
       } catch (err) {
         console.error('Zap failed', err);
-        alert('Zap failed—check console, balance, or ensure you have DIRA.');
+        alert('Zap failed—check console, balance, or ensure you have DIRA and SOL.');
       }
     });
 
