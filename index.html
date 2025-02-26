@@ -16,6 +16,7 @@
       align-items: center;
       margin: 0;
       text-align: center;
+      position: relative;
     }
     .container {
       padding: 4rem 2rem;
@@ -23,6 +24,7 @@
       background: rgba(255, 255, 255, 0.9);
       border-radius: 15px;
       box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+      position: relative;
     }
     h1 {
       font-size: 4rem;
@@ -39,6 +41,8 @@
       border: none;
       border-radius: 10px;
       transition: transform 0.3s, background-color 0.3s;
+      position: relative;
+      z-index: 10;
     }
     .btn:hover {
       background-color: #0056b3;
@@ -49,10 +53,7 @@
     }
     .diagnosis-popup {
       display: none;
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
+      position: absolute;
       background: #fff;
       padding: 2rem 4rem;
       border-radius: 15px;
@@ -72,24 +73,24 @@
     @keyframes popIn {
       from {
         opacity: 0;
-        transform: translate(-50%, -60%);
+        transform: scale(0.8);
       }
       to {
         opacity: 1;
-        transform: translate(-50%, -50%);
+        transform: scale(1);
       }
     }
     @media (max-width: 768px) {
       h1 { font-size: 2.5rem; }
       .btn { font-size: 1.5rem; padding: 0.8rem 2rem; }
-      .diagnosis-popup { font-size: 2rem; padding: 1.5rem 2rem; }
+      .diagnosis-popup { font-size: 2rem; padding: 1.5rem 2rem; max-width: 80%; }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Dira Diagnosis - Cryptodira Token Health Check</h1>
-    <button class="btn" onclick="showDiagnosis()">Run Diagnosis</button>
+    <button class="btn" id="diagnosisButton">Run Diagnosis</button>
   </div>
 
   <div id="diagnosisPopup" class="diagnosis-popup"></div>
@@ -109,18 +110,50 @@
       "Peace out, DIRA’s in top shape!"
     ];
 
-    // Function to show a random diagnosis in a pop-up
-    function showDiagnosis() {
-      const randomPhrase = diagnosisPhrases[Math.floor(Math.random() * diagnosisPhrases.length)];
-      const popup = document.getElementById('diagnosisPopup');
-      popup.textContent = randomPhrase;
-      popup.classList.add('show');
+    let isPopupVisible = false;
 
-      // Auto-hide pop-up after 5 seconds
-      setTimeout(() => {
+    // Function to show/hide a random diagnosis pop-up, positioned away from the button
+    function showDiagnosis() {
+      const button = document.getElementById('diagnosisButton');
+      const popup = document.getElementById('diagnosisPopup');
+      
+      if (isPopupVisible) {
+        // Hide the pop-up if already visible
         popup.classList.remove('show');
-      }, 5000);
+        isPopupVisible = false;
+        return;
+      }
+
+      // Show a random phrase
+      const randomPhrase = diagnosisPhrases[Math.floor(Math.random() * diagnosisPhrases.length)];
+      popup.textContent = randomPhrase;
+      
+      // Position the pop-up away from the button (random offset for fun)
+      const buttonRect = button.getBoundingClientRect();
+      const windowWidth = window.innerWidth;
+      const windowHeight = window.innerHeight;
+      const popupWidth = popup.offsetWidth || 600; // Default to 600px if not yet measured
+      const popupHeight = popup.offsetHeight || 200; // Default to 200px if not yet measured
+
+      // Position to the right and slightly above/below the button, ensuring it stays in viewport
+      const offsetX = Math.min(200, windowWidth - buttonRect.right - popupWidth - 20); // Max 200px right, stay in viewport
+      const offsetY = Math.random() < 0.5 ? -100 : 100; // Randomly above (-100px) or below (+100px)
+      const finalX = buttonRect.right + offsetX;
+      const finalY = buttonRect.top + (buttonRect.height / 2) + offsetY - (popupHeight / 2);
+
+      // Ensure pop-up stays within viewport
+      const safeX = Math.max(20, Math.min(finalX, windowWidth - popupWidth - 20));
+      const safeY = Math.max(20, Math.min(finalY, windowHeight - popupHeight - 20));
+
+      popup.style.left = safeX + 'px';
+      popup.style.top = safeY + 'px';
+
+      popup.classList.add('show');
+      isPopupVisible = true;
     }
+
+    // Attach the event listener to the button
+    document.getElementById('diagnosisButton').addEventListener('click', showDiagnosis);
   </script>
 </body>
 </html>
