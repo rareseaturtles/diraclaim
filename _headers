@@ -1,2 +1,0 @@
-/*
-Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' https://cdn.jsdelivr.net; connect-src 'self' https://api.mainnet-beta.solana.com https://solscan.io https://app.meteora.ag;
