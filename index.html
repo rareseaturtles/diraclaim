@@ -60,8 +60,8 @@
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
   <script src="https://unpkg.com/@solana/spl-token@latest/lib/index.iife.min.js"></script>
   <script>
-    // Initialize DOM elements at the top to avoid initialization errors
-    const connectBtn = document.querySelector('.btn-primary'); // Matches the "Sign Pledge" button
+    // Initialize DOM elements at the top
+    const connectBtn = document.querySelector('.btn-primary');
     const walletStatus = document.getElementById('wallet-status');
     const zapBtn = document.getElementById('zap-btn');
     const causeSelect = document.getElementById('cause-select');
@@ -73,7 +73,7 @@
     const charityWallet = new PublicKey('2QJ9Bwy8NhVG6C62pQ8qVFuCr94oR17CBk4nk18Gkavp');
     const tokenMint = new PublicKey('53hZ5wdfphd8wUoh6rqrv5STvB58yBRaXuZFAWwitKm8');
 
-    // Connect Wallet (Exactly like your "Sign Pledge" pattern)
+    // Connect Wallet
     async function connectWallet() {
       errorMessage.textContent = '';
       try {
@@ -90,7 +90,7 @@
       }
     }
 
-    // Zap Donation
+    // Zap Donation (Updated to use window.solana for signing)
     zapBtn.addEventListener('click', async () => {
       if (!wallet) return;
       const cause = causeSelect.value;
@@ -98,7 +98,7 @@
 
       errorMessage.textContent = '';
       try {
-        // Verify wallet has DIRA and SOL (simplified check)
+        // Verify wallet has DIRA and SOL
         const balance = await connection.getBalance(wallet.publicKey);
         if (balance < 0.005 * 1e9) { // 0.005 SOL minimum for fees
           throw new Error('Insufficient SOL for fees. Add at least 0.01 SOL.');
@@ -124,7 +124,7 @@
           charityWallet
         );
 
-        // Send 0.1 DIRA (1,000 smallest units, since decimals = 4)
+        // Prepare transaction
         const transaction = new Transaction();
         const transferInstruction = Token.createTransferInstruction(
           TOKEN_PROGRAM_ID,
@@ -140,8 +140,9 @@
         transaction.recentBlockhash = blockhash;
         transaction.feePayer = wallet.publicKey;
 
-        const signature = await wallet.signTransaction(transaction);
-        await connection.sendRawTransaction(signature.serialize());
+        // Use window.solana to sign and send the transaction
+        const signedTransaction = await window.solana.signTransaction(transaction);
+        const signature = await connection.sendRawTransaction(signedTransaction.serialize());
 
         // Update feed
         const entry = document.createElement('p');
@@ -175,8 +176,8 @@
           transaction.recentBlockhash = blockhash;
           transaction.feePayer = wallet.publicKey;
 
-          const signature = await wallet.signTransaction(transaction);
-          await connection.sendRawTransaction(signature.serialize());
+          const signedTransaction = await window.solana.signTransaction(transaction);
+          await connection.sendRawTransaction(signedTransaction.serialize());
         }
         return { address: associatedAddress };
       } catch (err) {
