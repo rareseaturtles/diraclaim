@@ -57,8 +57,8 @@
     <div id="feed" class="border p-3"></div>
   </div>
 
-  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
-  <script src="https://unpkg.com/@solana/spl-token@latest/lib/index.iife.min.js"></script>
+  <script src="https://unpkg.com/@solana/web3.js@1.57.0/lib/index.iife.min.js"></script>
+  <script src="https://unpkg.com/@solana/spl-token@0.3.7/lib/index.iife.min.js"></script>
   <script>
     // Initialize DOM elements at the top
     const connectBtn = document.querySelector('.btn-primary');
@@ -86,26 +86,32 @@
           throw new Error('Phantom Wallet not detected');
         }
       } catch (err) {
-        console.error('Wallet connection failed', err);
-        errorMessage.textContent = `Connection failed: ${err.message}. Ensure Phantom is installed, unlocked, and allowed.`;
+        console.error('Wallet connection failed', err.stack || err);
+        errorMessage.textContent = `Connection failed: ${err.message || 'Unknown error'}. Ensure Phantom is installed, unlocked, and allowed.`;
       }
     }
 
     // Zap Donation (Enhanced debugging, 1,000 DIRA)
     zapBtn.addEventListener('click', async () => {
+      errorMessage.textContent = '';
+      console.log('Zap button clicked, wallet:', wallet ? 'Connected' : 'Not connected');
       if (!wallet) {
         errorMessage.textContent = 'Please connect your wallet first.';
         console.log('No wallet connected');
         return;
       }
       const cause = causeSelect.value;
-      if (!cause) return alert('Pick a cause!');
+      if (!cause) {
+        alert('Pick a cause!');
+        errorMessage.textContent = 'Please pick a cause.';
+        return;
+      }
 
-      errorMessage.textContent = '';
       console.log('Zapping 1,000 DIRA...', { wallet, cause });
       try {
         // Verify wallet has DIRA and SOL
         const solBalance = await connection.getBalance(wallet.publicKey);
+        console.log('SOL balance:', solBalance / 1e9, 'SOL');
         if (solBalance < 0.005 * 1e9) { // 0.005 SOL minimum for fees
           throw new Error('Insufficient SOL for fees. Add at least 0.01 SOL.');
         }
@@ -119,6 +125,7 @@
 
         // Check if user has DIRA
         const userTokenBalance = await getTokenBalance(userTokenAccount);
+        console.log('DIRA balance:', userTokenBalance / 1e4, 'DIRA');
         if (userTokenBalance < 100000) { // 1,000 DIRA in smallest units (decimals = 4)
           throw new Error('Insufficient DIRA. You need at least 1,000 DIRA.');
         }
