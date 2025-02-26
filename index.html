@@ -51,7 +51,7 @@
       <option value="">Pick a Cause</option>
       <option value="Cleaning the Earth">Cleaning the Earth</option>
     </select>
-    <button id="zap-btn" class="btn btn-success mt-3" disabled>Zap 0.1 DIRA</button>
+    <button id="zap-btn" class="btn btn-success mt-3" disabled>Zap 1,000 DIRA</button>
     
     <h3 class="mt-4">Live Feed</h3>
     <div id="feed" class="border p-3"></div>
@@ -81,6 +81,7 @@
           wallet = await window.solana.connect();
           walletStatus.textContent = `Wallet: ${wallet.publicKey.toString().slice(0, 8)}...`;
           zapBtn.disabled = false;
+          console.log('Wallet connected:', wallet);
         } else {
           throw new Error('Phantom Wallet not detected');
         }
@@ -90,17 +91,22 @@
       }
     }
 
-    // Zap Donation (Updated to use window.solana for signing)
+    // Zap Donation (Enhanced debugging, 1,000 DIRA)
     zapBtn.addEventListener('click', async () => {
-      if (!wallet) return;
+      if (!wallet) {
+        errorMessage.textContent = 'Please connect your wallet first.';
+        console.log('No wallet connected');
+        return;
+      }
       const cause = causeSelect.value;
       if (!cause) return alert('Pick a cause!');
 
       errorMessage.textContent = '';
+      console.log('Zapping 1,000 DIRA...', { wallet, cause });
       try {
         // Verify wallet has DIRA and SOL
-        const balance = await connection.getBalance(wallet.publicKey);
-        if (balance < 0.005 * 1e9) { // 0.005 SOL minimum for fees
+        const solBalance = await connection.getBalance(wallet.publicKey);
+        if (solBalance < 0.005 * 1e9) { // 0.005 SOL minimum for fees
           throw new Error('Insufficient SOL for fees. Add at least 0.01 SOL.');
         }
 
@@ -109,11 +115,12 @@
           tokenMint,
           wallet.publicKey
         );
+        console.log('User token account:', userTokenAccount.toString());
 
         // Check if user has DIRA
         const userTokenBalance = await getTokenBalance(userTokenAccount);
-        if (userTokenBalance < 1000) { // 0.1 DIRA in smallest units
-          throw new Error('Insufficient DIRA. Add DIRA to your wallet.');
+        if (userTokenBalance < 100000) { // 1,000 DIRA in smallest units (decimals = 4)
+          throw new Error('Insufficient DIRA. You need at least 1,000 DIRA.');
         }
 
         // Get or create charity's token account
@@ -123,8 +130,9 @@
           tokenMint,
           charityWallet
         );
+        console.log('Charity token account:', charityTokenAccount.address.toString());
 
-        // Prepare transaction
+        // Prepare transaction for 1,000 DIRA
         const transaction = new Transaction();
         const transferInstruction = Token.createTransferInstruction(
           TOKEN_PROGRAM_ID,
@@ -132,7 +140,7 @@
           charityTokenAccount.address,
           wallet.publicKey,
           [],
-          1000 // 0.1 DIRA
+          100000 // 1,000 DIRA (100,000 smallest units)
         );
         transaction.add(transferInstruction);
 
@@ -141,18 +149,20 @@
         transaction.feePayer = wallet.publicKey;
 
         // Use window.solana to sign and send the transaction
+        console.log('Signing transaction...', transaction);
         const signedTransaction = await window.solana.signTransaction(transaction);
+        console.log('Transaction signed, sending...', signedTransaction);
         const signature = await connection.sendRawTransaction(signedTransaction.serialize());
 
         // Update feed
         const entry = document.createElement('p');
-        entry.textContent = `${wallet.publicKey.toString().slice(0, 8)} zapped 0.1 DIRA to ${cause}`;
+        entry.textContent = `${wallet.publicKey.toString().slice(0, 8)} zapped 1,000 DIRA to ${cause}`;
         feed.prepend(entry);
 
-        alert(`Zapped 0.1 DIRA to ${cause}! Check Solscan for tx: ${signature}`);
+        alert(`Zapped 1,000 DIRA to ${cause}! Check Solscan for tx: ${signature}`);
       } catch (err) {
-        console.error('Zap failed', err);
-        errorMessage.textContent = `Zap failed: ${err.message}. Check console for details.`;
+        console.error('Zap failed', err.stack || err);
+        errorMessage.textContent = `Zap failed: ${err.message || 'Unknown error'}. Check console for details.`;
       }
     });
 
@@ -162,7 +172,6 @@
         const associatedAddress = await getAssociatedTokenAddress(mint, owner);
         const accountInfo = await connection.getAccountInfo(associatedAddress);
         if (!accountInfo) {
-          // Create associated token account if it doesn't exist
           const transaction = new Transaction();
           const createInstruction = createAssociatedTokenAccountInstruction(
             wallet.publicKey,
@@ -181,7 +190,7 @@
         }
         return { address: associatedAddress };
       } catch (err) {
-        console.error('Token account setup failed', err);
+        console.error('Token account setup failed', err.stack || err);
         throw err;
       }
     }
@@ -192,7 +201,7 @@
         const accountInfo = await connection.getTokenAccountBalance(tokenAccount);
         return accountInfo.value.uiAmount * 1e4; // Convert to smallest units (decimals = 4)
       } catch (err) {
-        console.error('Failed to get token balance', err);
+        console.error('Failed to get token balance', err.stack || err);
         return 0;
       }
     }
